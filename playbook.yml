@@ -1,0 +1,75 @@
+---
+- hosts: zookeepers
+  become: true
+
+  tasks:
+    - name: Install OpenJDK-17
+      apt: name=openjdk-17-jre update_cache=yes state=latest force_apt_get=yes
+
+    - name: Create Zookeeper user account
+      user:
+        name: zookeeper
+        comment: The Zookeeper system user
+        system: yes
+
+    - name: Zookeeper data directory
+      file:
+        path: /var/lib/zookeeper
+        owner: zookeeper
+        group: zookeeper
+        state: directory
+
+    - name: Download Zookeeper tarball
+      get_url:
+        url: "https://dlcdn.apache.org/zookeeper/zookeeper-3.7.1/apache-zookeeper-3.7.1-bin.tar.gz"
+        dest: "/opt/"
+        checksum: "sha512:9103628a50745fa1a289bca666fda4a9c08ec17c55cf13e66887e7ba76e93dbae60a1f1ffd6c10798be3a16069344ecbc00cebb29bf03d9cd7096ccd098ed011"
+      register: zookeeper_tarball
+
+    - name: Extract tarball
+      unarchive:
+        src: "/opt/apache-zookeeper-3.7.1-bin.tar.gz"
+        dest: "/opt"
+        remote_src: yes
+        owner: zookeeper
+        group: zookeeper
+      when: zookeeper_tarball.changed
+
+    - name: Link the directory
+      file:
+        src: /opt/apache-zookeeper-3.7.1-bin
+        dest: /opt/zookeeper
+        owner: zookeeper
+        group: zookeeper
+        state: link
+        follow: yes
+
+
+    - name: Deploy Zookeeper configuration
+      template:
+        src: "files/zookeeper.conf.j2"
+        dest: "/opt/zookeeper/conf/zookeeper.conf"
+        owner: zookeeper
+        group: zookeeper
+      register: zookeeper_configuration
+
+    - name: Deploy Zookeeper Systemd service file
+      template:
+        src: "files/zookeeper.service.j2"
+        dest: "/etc/systemd/system/zookeeper.service"
+      register: zookeeper_service
+
+
+    - name: Zookeeper Systemd service
+      systemd:
+        name: zookeeper
+        state: started
+        enabled: yes
+
+    - name: Zookeeper restarts
+      systemd:
+        name: zookeeper
+        state: restarted
+        daemon_reload: yes
+      when: zookeeper_configuration.changed or zookeeper_service.changed
+
