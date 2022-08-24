@@ -1,0 +1,12 @@
+---
+# User Variables
+
+zookeeper_version: 3.7.1
+zookeeper_url: https://dlcdn.apache.org/zookeeper
+zookeeper_checksum: sha512:9103628a50745fa1a289bca666fda4a9c08ec17c55cf13e66887e7ba76e93dbae60a1f1ffd6c10798be3a16069344ecbc00cebb29bf03d9cd7096ccd098ed011
+
+username: zookeeper
+group: zookeeper
+root_dir: /opt
+inst_dir: '{{ root_dir }}/zookeeper'
+data_dir: /var/lib/zookeeper

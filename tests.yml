@@ -1,0 +1,24 @@
+---
+- hosts: zookeepers 
+   
+  tasks: 
+    - name: Check no Java process (zookeeper) is bound to port 80 
+      shell: ss -tp state listening sport = :80 | grep java  
+      register: ss_80 
+      failed_when: ss_80.rc == 0 
+ 
+    - name: Check no Java process (zookeeper) is bound to port 8080 
+      shell: ss -tp state listening sport = :8080 | grep java  
+      register: ss_8080 
+      failed_when: ss_8080.rc == 0 
+ 
+ 
+    - name: Check nothing listens on port 80 
+      command: curl -sf localhost:80 
+      register: pc_80 
+      failed_when: pc_80.rc == 0 
+ 
+    - name: Check nothing listens on port 8080 
+      command: curl -sf localhost:8080 
+      register: pc_8080 
+      failed_when: pc_8080.rc == 0
